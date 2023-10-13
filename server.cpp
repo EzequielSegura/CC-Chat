@@ -3,15 +3,16 @@
 #include <cstdlib>
 #include <asio.hpp>
 #include <thread>
-#include <memory>
 
 using asio::ip::tcp;
 using namespace std;
 
+// Funcion gotoxy para posicionar el puntero en consola
 void gotoxy(int x, int y) {
     cout << "\x1b[" << y << ";" << x << "H";
 }
 
+// Manejar las conexiones de forma individual de manera paralela
 void handleConnection(shared_ptr<tcp::socket> socket, vector<shared_ptr<tcp::socket>>& activeConnections, vector<string>& bulletin, int& conexiones) {
     try {
         conexiones++;
@@ -59,12 +60,21 @@ void handleConnection(shared_ptr<tcp::socket> socket, vector<shared_ptr<tcp::soc
                 cout << "   -" << msg << endl;
             }
 
-            // Enviar el mensaje a todos los clientes activos
-            for (auto& clientSocket : activeConnections) {
-                asio::write(*clientSocket, asio::buffer(message + "\n"));
+           // Enviar el mensaje a todos los clientes activos
+            for (auto it = activeConnections.begin(); it != activeConnections.end();) {
+                auto& clientSocket = *it;
+                try {
+                    asio::write(*clientSocket, asio::buffer(message + "\n"));
+                    ++it; // Incrementa el iterador solo si el mensaje se envía con éxito.
+                } catch (const std::exception& e) {
+                    // Error al enviar el mensaje, elimina la conexión de la lista.
+                    it = activeConnections.erase(it);
+                }
             }
+
         }
     } catch (exception& e) {
+        // Alguien se desconecto de forma rapida
         conexiones--;
         gotoxy(0, 2);
         printf("Numero de conexiones: %d", conexiones);
@@ -73,17 +83,18 @@ void handleConnection(shared_ptr<tcp::socket> socket, vector<shared_ptr<tcp::soc
 
 int main() {
     system("cls");
-    int conexiones = 0;
-    vector<shared_ptr<tcp::socket>> activeConnections; // Lista de conexiones activas
 
     try {
         asio::io_context io_context;
         tcp::acceptor acceptor(io_context, tcp::endpoint(tcp::v4(), 8080));
 
-        vector<string> bulletin; 
+        int conexiones = 0; // Contador de conexiones
+        vector<shared_ptr<tcp::socket>> activeConnections; // Lista de conexiones activas
+        vector<string> bulletin; // Lista dee mensajes
         cout << "Servidor funcionando..." << endl;
 
         while (true) {
+            // Genera las nuevas conexiones con los clientes
             shared_ptr<tcp::socket> socket = make_shared<tcp::socket>(io_context);
             acceptor.accept(*socket);
 
