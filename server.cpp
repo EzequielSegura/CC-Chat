@@ -44,6 +44,7 @@ void handleConnection(shared_ptr<tcp::socket> socket, vector<shared_ptr<tcp::soc
             istream input(&buffer);
             string message;
             getline(input, message);
+            string nuevoMensaje;
 
             gotoxy(0, 3);
             cout << "                                                                                        ";
@@ -60,7 +61,7 @@ void handleConnection(shared_ptr<tcp::socket> socket, vector<shared_ptr<tcp::soc
                 cout << "   -" << msg << endl;
             }
 
-           // Enviar el mensaje a todos los clientes activos
+            // Enviar el mensaje a todos los clientes activos
             for (auto it = activeConnections.begin(); it != activeConnections.end();) {
                 auto& clientSocket = *it;
                 try {

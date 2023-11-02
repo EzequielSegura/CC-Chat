@@ -35,13 +35,16 @@ void receiveMessages(tcp::socket& socket, vector<string>& bulletin) {
             // Almacenar mensajes segun se reciben
             bulletin.push_back(message);
 
+            // Limpiar la pantalla
+            system("cls");
+            // Imprimir los mensajes
             gotoxy(0, 4);
             cout << "Mensajes:" << endl;
 
             int startIdx = 0; // Índice inicial para imprimir los mensajes
 
             if (bulletin.size() > 40) {
-                startIdx = bulletin.size() - 40; // Si hay más de 40 mensajes, empezamos desde los últimos 20
+                startIdx = bulletin.size() - 40; // Si hay más de 40 mensajes, empezamos desde los últimos 40
             }
 
             for (int i = startIdx; i < bulletin.size(); i++) {
@@ -66,21 +69,24 @@ int main(int argc, char* argv[]) {
     string username = argv[2];
     // Recibre la ip del servidor
     string ip = argv[4];
-
+    // Limpiar la consola al iniciar el programa
     system("cls");
-
+    // Cambia el titulo de la consola por el nombre del usuario
+    // Utiliza el comando 'system' para cambiar el título de la ventana de la consola
+    string comando = "title " + string(username);
+    system(comando.c_str());
     try {
         asio::io_context io_context;
         tcp::socket socket(io_context);
         
         // Lista de mensajes
-        vector<string> bulletin; // Lista dee mensajes
+        vector<string> bulletin; 
 
         // Conectar con el servidor usando la ip que se ingreso
         socket.connect(tcp::endpoint(asio::ip::address::from_string(ip), 8080));
 
         // Mensaje de que pudo conectar
-        cout << "Conectado" << endl;
+        cout << " Conectado" << endl;
 
         // Envia mensaje inicial al entrar al chat
         asio::async_write(socket, asio::buffer("(" + username + ") " + "Entró al chat" + "\n"), [](const asio::error_code& error, size_t bytes_transferred) {});
@@ -92,7 +98,6 @@ int main(int argc, char* argv[]) {
             // Recibir el mensaje para enviar
             gotoxy(1,1);
             string message;
-            cout << ">";
             getline(cin, message);
             
             // Desconectar de forma voluntaria y enviar un mensaje de despedida
